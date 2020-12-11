@@ -3,18 +3,21 @@ import torch
 
 import config
 
+BB_HEIGHT = 16
+BB_WIDTH = 16
+NB_H_BB = 14
+NB_W_BB = 14
+
 
 class SigRelu(nn.Module):
     def __init__(self):
         super(SigRelu, self).__init__()
 
     def forward(self, x):
-        a = torch.sigmoid(x[:, 0:1, :, :])
-        b = torch.relu(x[:, 1:, :, :])
-        x[:, 0:1, :, :] = a
-        x[:, 1:, :, :] = b
-
-
+        a = torch.sigmoid(x[:, 0:3, :, :])
+        b = torch.relu(x[:, 3:, :, :])
+        x[:, 0:3, :, :] = a
+        x[:, 3:, :, :] = b
         return x
 
 
