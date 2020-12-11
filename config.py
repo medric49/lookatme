@@ -9,3 +9,9 @@ iou_threshold = 0.6
 
 im_height = 224
 im_width = 224
+
+learning_rate = 0.002
+betas = (0.9, 0.999)
+
+epochs = 50
+

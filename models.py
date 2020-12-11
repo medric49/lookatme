@@ -9,20 +9,33 @@ NB_H_BB = 14
 NB_W_BB = 14
 
 
-class SigRelu(nn.Module):
+class SigLu(nn.Module):
     def __init__(self):
-        super(SigRelu, self).__init__()
+        super(SigLu, self).__init__()
 
     def forward(self, x):
-        a = torch.sigmoid(x[:, 0:3, :, :])
-        b = torch.relu(x[:, 3:, :, :])
-        x[:, 0:3, :, :] = a
-        x[:, 3:, :, :] = b
+        x = torch.relu(x)
+        x[:, 0:3, :, :] = torch.sigmoid(x[:, 0:3, :, :])
+        # x[:, 3:, :, :] = torch.relu(x[:, 3:, :, :])
         return x
 
 
-def create_model():
+class Loss(nn.Module):
+    def __init__(self):
+        super(Loss, self).__init__()
 
+    def forward(self, x, y):
+        # (?, 5)
+        z = x - y
+
+        z = z**2
+
+        loss = z[:, 0] + y[0] * (z[:, 1:].sum(dim=1))
+
+        return loss.sum()
+
+
+def create_model():
     return nn.Sequential(
         # (?, 3, 224, 224)
         nn.Conv2d(in_channels=3, out_channels=64, kernel_size=(3, 3), padding=1, stride=1, bias=True),
@@ -55,6 +68,6 @@ def create_model():
         nn.Conv2d(in_channels=32, out_channels=16, kernel_size=(1, 1), bias=True),
         nn.ReLU(),
         nn.Conv2d(in_channels=16, out_channels=5, kernel_size=(1, 1), bias=True),
-        SigRelu(),
+        SigLu(),
         # (?, 5, 14, 14)
     ).to(device=config.device)
