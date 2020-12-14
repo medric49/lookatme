@@ -71,3 +71,47 @@ def create_model():
         SigLu(),
         # (?, 5, 14, 14)
     ).to(device=config.device)
+
+
+def create_over_feat_model():
+    return nn.Sequential(
+        nn.Conv2d(in_channels=3, out_channels=96, kernel_size=(11, 11), stride=(4, 4)),
+        nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+        nn.ReLU(),
+        nn.Conv2d(in_channels=96, out_channels=256, kernel_size=(5, 5), stride=(1, 1)),
+        nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+        nn.ReLU(),
+        nn.Conv2d(in_channels=256, out_channels=512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+        nn.ReLU(),
+        nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+        nn.ReLU(),
+        nn.Conv2d(in_channels=1024, out_channels=1024, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+        nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+        nn.ReLU(),
+
+
+    ).to(device=config.device)
+
+
+class OverFeatClassModel (nn.Module):
+    def __init__(self):
+        super(OverFeatClassModel, self).__init__()
+        self.l1 = nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(6, 6), stride=(1, 1))
+        self.l2 = nn.Conv2d(in_channels=512, out_channels=32, kernel_size=(1, 1), stride=(1, 1))
+        self.l3 = nn.Conv2d(in_channels=32, out_channels=1, kernel_size=(1, 1), stride=(1, 1))
+
+        self.dropout = nn.Dropout(config.dropout_prob)
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        x = self.l1(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+        x = self.l2(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+        x = self.l3(x)
+        x = self.sigmoid(x)
+
+        return x

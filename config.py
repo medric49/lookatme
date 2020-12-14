@@ -15,3 +15,5 @@ betas = (0.9, 0.999)
 
 epochs = 50
 
+dropout_prob = 0.5
+
