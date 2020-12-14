@@ -7,13 +7,19 @@ gpu = torch.device('cuda')
 detection_threshold = 0.5
 iou_threshold = 0.6
 
-im_height = 224
-im_width = 224
+im_height = 231
+im_width = 231
 
-learning_rate = 0.002
+learning_rate = 0.05
 betas = (0.9, 0.999)
 
-epochs = 50
-
+epochs = 10
 dropout_prob = 0.5
+
+batch_size = 128
+
+images_folder = 'images'
+
+net_state_file = 'state.pth'
+
 

@@ -5,6 +5,21 @@ import models
 import torch
 
 
+class TargetTransform:
+    def __call__(self, t):
+        return torch.tensor(t, dtype=torch.float, device=config.device)
+
+
+class ToDevice:
+    def __call__(self, pic):
+        return pic.to(device=config.device)
+
+
+class TransposeToCHW:
+    def __call__(self, pic):
+        return pic.view((3, config.im_height, config.im_width))
+
+
 def compute_losses(model_output, criterion):
     # (?, 5, 14, 14)
 

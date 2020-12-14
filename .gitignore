@@ -3,6 +3,10 @@ test.png
 __pycache__
 
 ia_data
+data
 images
 videos
+state.pth
+video_to_images.py
+tmp.py
 
