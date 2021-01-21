@@ -5,9 +5,14 @@ import models
 import torch
 
 
-class TargetTransform:
+class TransformToFloat:
     def __call__(self, t):
-        return torch.tensor(t, dtype=torch.float, device=config.device)
+        return torch.tensor(t, dtype=torch.float)
+
+
+class TransformToLong:
+    def __call__(self, t):
+        return torch.tensor(t, dtype=torch.long)
 
 
 class ToDevice:

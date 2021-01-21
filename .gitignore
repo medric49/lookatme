@@ -9,4 +9,6 @@ videos
 state.pth
 video_to_images.py
 tmp.py
+Cat_Dog_data
+*.pt
 

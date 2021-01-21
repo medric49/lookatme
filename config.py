@@ -13,13 +13,13 @@ im_width = 231
 learning_rate = 0.05
 betas = (0.9, 0.999)
 
-epochs = 10
-dropout_prob = 0.5
+epochs = 125
+dropout_prob = 0
 
-batch_size = 128
+batch_size = 64
 
 images_folder = 'images'
 
-net_state_file = 'state.pth'
-
+overfeat_state_file = 'overfeat_state.pt'
+overfeat_classifier_state_file = 'overfeat_classifier.pt'
 
