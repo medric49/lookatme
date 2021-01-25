@@ -74,7 +74,7 @@ def test():
     print('Accuracy : ', error.item())
 
 
-def test_image(image_file):
+def test_image(image_file, output_file):
     net = models.OverFeatRegressionModel(config.overfeat_state_file, config.overfeat_regression_state_file,
                                              overfeat_training=False).to(device=config.device)
 
@@ -98,12 +98,12 @@ def test_image(image_file):
     point_1 = int(output[1].item() * config.im_height), int(output[2].item() * config.im_width)
     point_2 = int(output[3].item() * config.im_height), int(output[4].item() * config.im_width)
     cv2.rectangle(image, point_1, point_2, (0, 0, 255, 10), 2)
-    cv2.imwrite('test.png', image)
+    cv2.imwrite(output_file, image)
 
 
 
 if __name__ == '__main__':
     # train()
     # test()
-    test_image('ia_data/faces_tmp/30403.png')
+    test_image('ia_data/faces_tmp/30403.png', 'demo.png')
 
