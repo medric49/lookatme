@@ -152,4 +152,12 @@ class OverFeatClassificationModel (AbstractOverFeatModel):
 
 class OverFeatRegressionModel(AbstractOverFeatModel):
     def create_suffix(self):
-        return TestModel()
+        return nn.Sequential(
+            nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(6, 6), stride=(1, 1)),
+            nn.Sigmoid(),
+            nn.Conv2d(in_channels=512, out_channels=10, kernel_size=(1, 1), stride=(1, 1)),
+            nn.Sigmoid(),
+            nn.Conv2d(in_channels=10, out_channels=5, kernel_size=(1, 1), stride=(1, 1)),
+            nn.Sigmoid(),
+            nn.Flatten(),
+        )
