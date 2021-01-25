@@ -74,32 +74,44 @@ def test():
     print('Accuracy : ', error.item())
 
 
-def test_image(image_file, output_file):
-    net = models.OverFeatRegressionModel(config.overfeat_state_file, config.overfeat_regression_state_file,
-                                             overfeat_training=False).to(device=config.device)
+def test_image(image_file, output_file, size=None):
+    image = cv2.imread(image_file)
+    if size is not None:
+        image = cv2.resize(image, size)
+    height, width, _ = image.shape
 
+    output = localize(image_file, width=width, height=height)
+    print(output)
+
+    n_i = int(height/config.im_height)
+    n_j = int(width/config.im_width)
+
+    for i in range(n_i):
+        for j in range(n_j):
+            rec = output[n_i*i+j]
+            point_1 = int(rec[2].item() * config.im_width + j * config.im_width), int(rec[1].item() * config.im_height + i * config.im_height)
+            point_2 = int(rec[4].item() * config.im_width + j * config.im_width), int(rec[3].item() * config.im_height + i * config.im_height)
+            cv2.rectangle(image, point_1, point_2, (0, 0, 255, 10), 2)
+
+    cv2.imwrite(output_file, image)
+
+
+def localize(image_file, width=config.im_width, height=config.im_height):
+    net = models.OverFeatRegressionModel(config.overfeat_state_file, config.overfeat_regression_state_file,
+                                         overfeat_training=False).to(device=config.device)
     net.eval()
 
     image = cv2.imread(image_file)
-    image = cv2.resize(image, (config.im_width, config.im_height))
+    image = cv2.resize(image, (width, height))
 
     transform = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
         utils.ToDevice()
     ])
-
-    x = transform(image)
-
-    x = x.view((-1, 3, config.im_height, config.im_width))
-
+    x = transform(image).view((-1, 3, height, width))
     output = net(x)[0]
-    print(output)
-
-    point_1 = int(output[2].item() * config.im_height), int(output[1].item() * config.im_width)
-    point_2 = int(output[4].item() * config.im_height), int(output[3].item() * config.im_width)
-    cv2.rectangle(image, point_1, point_2, (0, 0, 255, 10), 2)
-    cv2.imwrite(output_file, image)
-
+    output = output.transpose(1, 0)
+    return output
 
 
 if __name__ == '__main__':

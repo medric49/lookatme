@@ -116,28 +116,6 @@ class AbstractOverFeatModel(nn.Module):
         raise NotImplementedError()
 
 
-class TestModel(nn.Module):
-    def __init__(self):
-        super(TestModel, self).__init__()
-        self.f1 = nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(6, 6), stride=(1, 1))
-        self.f2 = nn.ReLU()
-        self.f3 = nn.Conv2d(in_channels=512, out_channels=10, kernel_size=(1, 1), stride=(1, 1))
-        self.f4 = nn.ReLU()
-        self.f5 = nn.Conv2d(in_channels=10, out_channels=5, kernel_size=(1, 1), stride=(1, 1))
-        self.f6 = nn.ReLU()
-        self.f7 = nn.Flatten()
-
-    def forward(self, x):
-        x = self.f1(x)
-        x = self.f2(x)
-        x = self.f3(x)
-        x = self.f4(x)
-        x = self.f5(x)
-        x = self.f6(x)
-        x = self.f7(x)
-        return x
-
-
 class OverFeatClassificationModel (AbstractOverFeatModel):
     def create_suffix(self):
         return nn.Sequential(
@@ -153,11 +131,11 @@ class OverFeatClassificationModel (AbstractOverFeatModel):
 class OverFeatRegressionModel(AbstractOverFeatModel):
     def create_suffix(self):
         return nn.Sequential(
-            nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(6, 6), stride=(1, 1)),
+            nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(6, 6), stride=(6, 6)),
             nn.Sigmoid(),
             nn.Conv2d(in_channels=512, out_channels=10, kernel_size=(1, 1), stride=(1, 1)),
             nn.Sigmoid(),
             nn.Conv2d(in_channels=10, out_channels=5, kernel_size=(1, 1), stride=(1, 1)),
             nn.Sigmoid(),
-            nn.Flatten(),
+            nn.Flatten(start_dim=2),
         )
