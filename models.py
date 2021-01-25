@@ -9,68 +9,17 @@ NB_H_BB = 14
 NB_W_BB = 14
 
 
-class SigLu(nn.Module):
-    def __init__(self):
-        super(SigLu, self).__init__()
-
-    def forward(self, x):
-        x = torch.relu(x)
-        x[:, 0:3, :, :] = torch.sigmoid(x[:, 0:3, :, :])
-        # x[:, 3:, :, :] = torch.relu(x[:, 3:, :, :])
-        return x
-
-
 class Loss(nn.Module):
     def __init__(self):
         super(Loss, self).__init__()
 
     def forward(self, x, y):
         # (?, 5)
-        z = x - y
-
-        z = z**2
-
-        loss = z[:, 0] + y[0] * (z[:, 1:].sum(dim=1))
-
-        return loss.sum()
-
-
-def create_vgg16_model():
-    return nn.Sequential(
-        # (?, 3, 224, 224)
-        nn.Conv2d(in_channels=3, out_channels=64, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.MaxPool2d(kernel_size=(2, 2)),
-        # (?, 64, 112, 112)
-
-        nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.MaxPool2d(kernel_size=(2, 2)),
-        # (?, 128, 56, 56)
-
-        nn.Conv2d(in_channels=128, out_channels=256, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.MaxPool2d(kernel_size=(2, 2)),
-        # (?, 256, 28, 28)
-
-        nn.Conv2d(in_channels=256, out_channels=512, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.Conv2d(in_channels=512, out_channels=512, kernel_size=(3, 3), padding=1, stride=1, bias=True),
-        nn.MaxPool2d(kernel_size=(2, 2)),
-        # (?, 512, 14, 14)
-
-        nn.Conv2d(in_channels=512, out_channels=256, kernel_size=(1, 1), bias=True),
-        nn.ReLU(),
-        nn.Conv2d(in_channels=256, out_channels=32, kernel_size=(1, 1), bias=True),
-        nn.ReLU(),
-        nn.Conv2d(in_channels=32, out_channels=16, kernel_size=(1, 1), bias=True),
-        nn.ReLU(),
-        nn.Conv2d(in_channels=16, out_channels=5, kernel_size=(1, 1), bias=True),
-        SigLu(),
-        # (?, 5, 14, 14)
-    )
+        z = (x - y)**2
+        t = z[:, 1:].sum(dim=1)
+        loss = z[:, 0] + y[:, 0] * t
+        loss = loss.mean()
+        return loss
 
 
 def create_model():
@@ -116,38 +65,29 @@ def create_overfeat_model():
     )
 
 
-class OverFeatClassifierModel (nn.Module):
+class AbstractOverFeatModel(nn.Module):
     def __init__(self, overfeat_state_file=None, state_file=None, overfeat_training=False):
 
         self.overfeat_training = overfeat_training
 
-        super(OverFeatClassifierModel, self).__init__()
+        super(AbstractOverFeatModel, self).__init__()
         self.prefix = create_overfeat_model()
         self.in_size = 6*6*1024
 
-        # self.l1 = nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(6, 6), stride=(1, 1))
-        # self.l2 = nn.Conv2d(in_channels=512, out_channels=32, kernel_size=(1, 1), stride=(1, 1))
-        # self.l3 = nn.Conv2d(in_channels=32, out_channels=1, kernel_size=(1, 1), stride=(1, 1))
-
-        self.suffix = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(self.in_size, 512),
-            nn.ReLU(),
-            nn.Linear(512, 10),
-            nn.ReLU(),
-            nn.Linear(10, 2),
-        )
+        self.suffix = self.create_suffix()
 
         if overfeat_state_file is not None:
             try:
                 self.prefix.load_state_dict(torch.load(overfeat_state_file))
-            except FileNotFoundError:
+                print('Prefix loaded...')
+            except Exception as e:
                 pass
 
         if state_file is not None:
             try:
                 self.suffix.load_state_dict(torch.load(state_file))
-            except FileNotFoundError:
+                print('Suffix loaded...')
+            except Exception as e:
                 pass
 
         if not overfeat_training:
@@ -161,7 +101,7 @@ class OverFeatClassifierModel (nn.Module):
 
     def parameters(self, recurse: bool = True):
         if self.overfeat_training:
-            return super(OverFeatClassifierModel, self).parameters()
+            return super(AbstractOverFeatModel, self).parameters()
         else:
             return self.suffix.parameters(recurse)
 
@@ -171,3 +111,45 @@ class OverFeatClassifierModel (nn.Module):
 
         if state_file is not None:
             torch.save(self.suffix.state_dict(), state_file)
+
+    def create_suffix(self):
+        raise NotImplementedError()
+
+
+class TestModel(nn.Module):
+    def __init__(self):
+        super(TestModel, self).__init__()
+        self.f1 = nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(6, 6), stride=(1, 1))
+        self.f2 = nn.ReLU()
+        self.f3 = nn.Conv2d(in_channels=512, out_channels=10, kernel_size=(1, 1), stride=(1, 1))
+        self.f4 = nn.ReLU()
+        self.f5 = nn.Conv2d(in_channels=10, out_channels=5, kernel_size=(1, 1), stride=(1, 1))
+        self.f6 = nn.ReLU()
+        self.f7 = nn.Flatten()
+
+    def forward(self, x):
+        x = self.f1(x)
+        x = self.f2(x)
+        x = self.f3(x)
+        x = self.f4(x)
+        x = self.f5(x)
+        x = self.f6(x)
+        x = self.f7(x)
+        return x
+
+
+class OverFeatClassificationModel (AbstractOverFeatModel):
+    def create_suffix(self):
+        return nn.Sequential(
+            nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=(6, 6), stride=(1, 1)),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=512, out_channels=10, kernel_size=(1, 1), stride=(1, 1)),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=10, out_channels=2, kernel_size=(1, 1), stride=(1, 1)),
+            nn.Flatten(),
+        )
+
+
+class OverFeatRegressionModel(AbstractOverFeatModel):
+    def create_suffix(self):
+        return TestModel()

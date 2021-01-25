@@ -8,7 +8,7 @@ import torch.optim as optim
 
 if __name__ == '__main__':
     image = cv2.imread('joffrey.jpg')
-    image = cv2.resize(image, (config.im_height, config.im_width))
+    image = cv2.resize(image, (config.im_width, config.im_height))
 
     x = torch.tensor([image, image, image, image, image, image, ], dtype=torch.float, device=config.device)
     x = x.view((-1, 3, config.im_height, config.im_width))

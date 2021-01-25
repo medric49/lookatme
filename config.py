@@ -22,4 +22,5 @@ images_folder = 'images'
 
 overfeat_state_file = 'overfeat_state.pt'
 overfeat_classifier_state_file = 'overfeat_classifier.pt'
+overfeat_regression_state_file = 'overfeat_regression.pt'
 

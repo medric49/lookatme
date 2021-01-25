@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import torch.utils.data
 import torchvision.datasets
@@ -24,7 +25,8 @@ def train():
     dataloader = torch.utils.data.DataLoader(datasets, batch_size=config.batch_size, shuffle=True)
     datasets_len = len(datasets)
 
-    net = models.OverFeatClassifierModel(config.overfeat_state_file, config.overfeat_classifier_state_file, False).to(device=config.device)
+    net = models.OverFeatClassificationModel(config.overfeat_state_file, config.overfeat_classifier_state_file,
+                                             False).to(device=config.device)
 
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(params=net.parameters(), lr=config.learning_rate)
@@ -69,19 +71,44 @@ def test():
                                                 target_transform=target_transform)
     dataloader = torch.utils.data.DataLoader(datasets, batch_size=config.batch_size, shuffle=True)
 
-    net = models.OverFeatClassifierModel(config.overfeat_state_file, config.overfeat_classifier_state_file, overfeat_training=False).to(device=config.device)
+    net = models.OverFeatClassificationModel(config.overfeat_state_file, config.overfeat_classifier_state_file, overfeat_training=False).to(device=config.device)
 
     net.eval()
 
     inputs, labels = next(iter(dataloader))
     outputs = torch.softmax(net(inputs), dim=1).argmax(dim=1)
+    print(outputs)
+    print(labels)
 
     error = torch.mean(1. * (outputs == labels) )
 
     print('Accuracy : ', error.item())
 
 
+def test_image(image_file):
+    net = models.OverFeatClassificationModel(config.overfeat_state_file, config.overfeat_classifier_state_file,
+                                             overfeat_training=False).to(device=config.device)
+
+    net.eval()
+
+    image = cv2.imread(image_file)
+    image = cv2.resize(image, (config.im_width, config.im_height))
+
+    transform = torchvision.transforms.Compose([
+        torchvision.transforms.ToTensor(),
+        utils.ToDevice()
+    ])
+
+    x = transform(image)
+
+    x = x.view((-1, 3, config.im_height, config.im_width))
+
+    output = torch.softmax(net(x), dim=1)[0]
+    print(output)
+
+
 if __name__ == '__main__':
-    train()
+    # train()
     # test()
+    test_image('ia_data/faces_tmp/32555.png')
 
